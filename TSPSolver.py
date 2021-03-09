@@ -16,6 +16,7 @@ import numpy as np
 from TSPClasses import *
 import heapq
 import itertools
+import copy
 
 
 
@@ -82,43 +83,67 @@ class TSPSolver:
 	'''
 
 	def greedy( self,time_allowance=60.0 ):
+		results = {}
 		cities = self._scenario.getCities()
 		ncities = len(cities)
 		print(ncities)
-		startingCity = cities[random.randint( 0, ncities )] #Double check this
+		startingCity = cities[random.randint( 0, ncities-1 )]
 		currCity = startingCity
-		unvisitied = cities
+		unvisitied = []
+		for unv in cities:
+			unvisitied.append(unv)
 		visited = []
 		routes = []
+		count = 0
 		unvisitied.remove(currCity)
 		visited.append(currCity)
 		routes.append(currCity)
 
 		start_time = time.time()
-		while len(unvisitied) != 0: #Running on a NoneType?
+		while len(unvisitied) != 0:
 			currCity = self.findClosestCity(currCity,unvisitied,routes,visited)	
+			count += 1
+			
 
-		routes.append(startingCity)		
+
+		print("Out of loop")
+		
+		routes.append(startingCity)	
+
+		for r in routes:
+			print(r._name)	
 
 		
 		bssf = TSPSolution(routes)
+		if bssf.cost == math.inf: #Talk with the TA here
+			return self.greedy()
+		else:
+			end_time = time.time()
+			print(bssf.cost)
+			results['cost'] = bssf.cost 
+			results['time'] = end_time - start_time
+			results['count'] = count
+			results['soln'] = bssf
+			results['max'] = None
+			results['total'] = None
+			results['pruned'] = None
 
-		end_time = time.time()
-
-		results['cost'] = bssf.cost 
-		results['time'] = end_time - start_time
-		#results['count'] = count
-		results['soln'] = bssf
-		results['max'] = None
-		results['total'] = None
-		results['pruned'] = None
+		return results
 
 		pass
 
 	def findClosestCity(self,currCity,unvisitied,routes,visited):
+		if len(unvisitied) == 1:
+			minCity = unvisitied[0]
+			routes.append(minCity)
+			visited.append(minCity)
+			unvisitied.remove(minCity)
+			return minCity
+
 		#Find closest city
 		minCost = 999999999999999
 		minCity = None
+
 		for city in unvisitied:
 			if currCity.costTo(city) < minCost:
 				minCity = city
@@ -128,7 +153,6 @@ class TSPSolver:
 		visited.append(minCity)
 		if len(unvisitied) == 1:
 			unvisitied = []
-			
 		else:
 			unvisitied.remove(minCity)
 		return minCity
