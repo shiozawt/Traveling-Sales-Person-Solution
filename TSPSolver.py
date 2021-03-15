@@ -86,9 +86,32 @@ class TSPSolver:
 		results = {}
 		cities = self._scenario.getCities()
 		ncities = len(cities)
-		print(ncities)
-		startingCity = cities[random.randint( 0, ncities-1 )]
-		currCity = startingCity
+		bssf = None
+		count = 0
+		start_time = time.time()
+	
+		for city in cities:
+			tempTuple = self.getPath(city,cities)
+			tempCost = TSPSolution(tempTuple[0])
+			if bssf == None or bssf.cost > tempCost.cost:
+				bssf = tempCost
+				count = tempTuple[1]
+		
+		end_time = time.time()
+		results['cost'] = bssf.cost 
+		results['time'] = end_time - start_time
+		results['count'] = count
+		results['soln'] = bssf
+		results['max'] = None
+		results['total'] = None
+		results['pruned'] = None
+
+		return results
+
+		pass
+
+	def getPath(self, startCity, cities):
+		currCity = startCity
 		unvisitied = []
 		for unv in cities:
 			unvisitied.append(unv)
@@ -99,38 +122,12 @@ class TSPSolver:
 		visited.append(currCity)
 		routes.append(currCity)
 
-		start_time = time.time()
 		while len(unvisitied) != 0:
 			currCity = self.findClosestCity(currCity,unvisitied,routes,visited)	
 			count += 1
-			
 
+		return [routes, count]
 
-		print("Out of loop")
-		
-		routes.append(startingCity)	
-
-		for r in routes:
-			print(r._name)	
-
-		
-		bssf = TSPSolution(routes)
-		if bssf.cost == math.inf: #Talk with the TA here
-			return self.greedy()
-		else:
-			end_time = time.time()
-			print(bssf.cost)
-			results['cost'] = bssf.cost 
-			results['time'] = end_time - start_time
-			results['count'] = count
-			results['soln'] = bssf
-			results['max'] = None
-			results['total'] = None
-			results['pruned'] = None
-
-		return results
-
-		pass
 
 	def findClosestCity(self,currCity,unvisitied,routes,visited):
 		if len(unvisitied) == 1:
@@ -148,7 +145,7 @@ class TSPSolver:
 			if currCity.costTo(city) < minCost:
 				minCity = city
 				minCost = currCity.costTo(city)
-		#print(minCity._name)
+
 		routes.append(minCity)
 		visited.append(minCity)
 		if len(unvisitied) == 1:
