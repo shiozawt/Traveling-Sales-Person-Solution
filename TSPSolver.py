@@ -128,7 +128,6 @@ class TSPSolver:
 
 		return [routes, count]
 
-
 	def findClosestCity(self,currCity,unvisitied,routes,visited):
 		if len(unvisitied) == 1:
 			minCity = unvisitied[0]
@@ -153,7 +152,7 @@ class TSPSolver:
 		else:
 			unvisitied.remove(minCity)
 		return minCity
-	
+
 	
 	
 	''' <summary>
@@ -168,8 +167,6 @@ class TSPSolver:
 	def branchAndBound( self, time_allowance=60.0 ):
 		pass
 
-
-
 	''' <summary>
 		This is the entry point for the algorithm you'll write for your group project.
 		</summary>
@@ -180,7 +177,88 @@ class TSPSolver:
 	'''
 		
 	def fancy( self,time_allowance=60.0 ):
-		pass
+		results = {}
+		cities = self._scenario.getCities()
+		bssf = None
+		count = 0
+		start_time = time.time()
+
+		distances = []
+		for city in cities:
+			tempDist = []
+			for city2 in cities:
+				if city == city2:
+					tempDist.append(math.inf)
+					continue
+				tempDist.append(city.costTo(city2))
+			distances.append(tempDist)
+		
+		optimalPath, optimalCost = self.DPTSP(distances)
+		
+		routes = []
+		for city in optimalPath:
+			routes.append(cities[city])
+		
+		routes.append(cities[optimalPath[0]])
+
+		end_time = time.time()
+		results['cost'] = optimalCost
+		results['time'] = end_time - start_time
+		results['count'] = 5
+		results['soln'] = TSPSolution(routes)
+		results['max'] = None
+		results['total'] = None
+		results['pruned'] = None
+		return results
+
+
+	def DPTSP(self,distances):
+		n = len(distances)
+		totalCities = set(range(n))
+
+		dpTable = {(tuple([i]), i): tuple([0, None]) for i in range(n)}
+		queue = [(tuple([i]), i) for i in range(n)]
+
+		while queue: # Iterate through untile queue is empty
+			prevVisited, prevLastPoint = queue.pop(0)
+			prevDist, _ = dpTable[(prevVisited, prevLastPoint)]
+			toVisit = totalCities.difference(set(prevVisited))
+			for newLastPoint in toVisit:
+				newVisited = tuple(sorted(list(prevVisited) + [newLastPoint]))
+				newDist = (prevDist + distances[prevLastPoint][newLastPoint])
+				if (newVisited, newLastPoint) not in dpTable:
+					dpTable[(newVisited, newLastPoint)] = (newDist, prevLastPoint)
+					queue += [(newVisited, newLastPoint)]
+				else:
+					if newDist < dpTable[(newVisited, newLastPoint)][0]:
+						dpTable[(newVisited, newLastPoint)] = (newDist, prevLastPoint)
+						
+		optimalPath, optimalCost = self.retracingOptimalPath(dpTable, n)
+		return optimalPath, optimalCost
+
+	def retracingOptimalPath(self, dpTable, n):
+
+		citiesToRetrace = tuple(range(n))
+		fullPath = dict((k,v) for k,v in dpTable.items() 
+						if k[0] == citiesToRetrace)
+		pathKey = min(fullPath.keys(), key=lambda x : fullPath[x][0])
+
+		lastCity = pathKey[1]
+		optimalCost, nextToLastCity = dpTable[pathKey]
+		optimalPath = [lastCity]
+		
+		citiesToRetrace = tuple(sorted(set(citiesToRetrace).difference({lastCity})))
+		while nextToLastCity is not None:
+			
+			lastCity = nextToLastCity
+			pathKey = (citiesToRetrace,lastCity)
+			_, nextToLastCity = dpTable[pathKey]
+		
+			optimalPath = [lastCity] + optimalPath
+			citiesToRetrace = tuple(sorted(set(citiesToRetrace).difference({lastCity})))
+
+		return optimalPath, optimalCost
+
 		
 
 
