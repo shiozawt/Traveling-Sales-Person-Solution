@@ -198,14 +198,14 @@ class TSPSolver:
 		routes = []
 		for city in optimalPath:
 			routes.append(cities[city])
-		
-		routes.append(cities[optimalPath[0]])
+
+		bssf = TSPSolution(routes)
 
 		end_time = time.time()
 		results['cost'] = optimalCost
 		results['time'] = end_time - start_time
 		results['count'] = 5
-		results['soln'] = TSPSolution(routes)
+		results['soln'] = bssf
 		results['max'] = None
 		results['total'] = None
 		results['pruned'] = None
