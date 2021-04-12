@@ -82,6 +82,8 @@ class TSPSolver:
 		algorithm</returns> 
 	'''
 
+	# total time complexity: O(n^3)
+	# total space: O(n) because our list cities stores n cities
 	def greedy( self,time_allowance=60.0 ):
 		results = {}
 		cities = self._scenario.getCities()
@@ -89,7 +91,9 @@ class TSPSolver:
 		bssf = None
 		count = 0
 		start_time = time.time()
-	
+
+		# O(n) time
+		# getPath is called n times and takes O(n^2) times resulting in total complexity of O(n^3)
 		for city in cities:
 			tempTuple = self.getPath(city,cities)
 			tempCost = TSPSolution(tempTuple[0])
@@ -110,6 +114,9 @@ class TSPSolver:
 
 		pass
 
+	# runs in O(n^2) time (see while loop for more information)
+	# space complexity: O(n) because unvisited, visited, and routes hold n objects. This results in
+	# O(3n) space which simplifies to O(n).
 	def getPath(self, startCity, cities):
 		currCity = startCity
 		unvisitied = []
@@ -122,12 +129,17 @@ class TSPSolver:
 		visited.append(currCity)
 		routes.append(currCity)
 
+		#this loop runs n times
 		while len(unvisitied) != 0:
+			#  findClosestCity() runs n times, and each time takes n time.
 			currCity = self.findClosestCity(currCity,unvisitied,routes,visited)	
 			count += 1
 
 		return [routes, count]
 
+	# runs in O(n)
+	# space complexity: O(n) because unvisited, visited, and routes hold n objects. This results in
+	# O(3n) space which simplifies to O(n).
 	def findClosestCity(self,currCity,unvisitied,routes,visited):
 		if len(unvisitied) == 1:
 			minCity = unvisitied[0]
@@ -140,6 +152,7 @@ class TSPSolver:
 		minCost = 999999999999999
 		minCity = None
 
+		#This loop runs n times
 		for city in unvisitied:
 			if currCity.costTo(city) < minCost:
 				minCity = city
@@ -175,7 +188,9 @@ class TSPSolver:
 		best solution found.  You may use the other three field however you like.
 		algorithm</returns> 
 	'''
-		
+
+	# total time complexity: O(2n^2) which simplifies down to O(n^2)
+	# space complexity: O(2n^2) which simplifies down to O(n^2)
 	def fancy( self,time_allowance=60.0 ):
 		results = {}
 		cities = self._scenario.getCities()
@@ -183,7 +198,10 @@ class TSPSolver:
 		count = 0
 		start_time = time.time()
 
+		#O(n) space (doesn't affect overall space)
 		distances = []
+
+		# this nested for loop runs in O(n^2) time
 		for city in cities:
 			tempDist = []
 			for city2 in cities:
@@ -192,7 +210,8 @@ class TSPSolver:
 					continue
 				tempDist.append(city.costTo(city2))
 			distances.append(tempDist)
-		
+
+		# DPTSP is O(n^2) time and space
 		optimalPath, optimalCost = self.DPTSP(distances)
 		
 		routes = []
@@ -211,14 +230,18 @@ class TSPSolver:
 		results['pruned'] = None
 		return results
 
-
+	# total time complexity: O(2n^2) which simplifies down to O(n^2)
+	# space complexity: O(2n^2) which simplifies down to O(n^2)
 	def DPTSP(self,distances):
 		n = len(distances)
 		totalCities = set(range(n))
 
+		# creating an nxn table below so space is O(n^2)
 		dpTable = {(tuple([i]), i): tuple([0, None]) for i in range(n)}
 		queue = [(tuple([i]), i) for i in range(n)]
 
+		# for loop below runs O(n) times inside our while loop which runs O(n) times as well. Thus we
+		# have a total time complexity of O(n^2)
 		while queue: # Iterate through untile queue is empty
 			prevVisited, prevLastPoint = queue.pop(0)
 			prevDist, _ = dpTable[(prevVisited, prevLastPoint)]
@@ -232,12 +255,16 @@ class TSPSolver:
 				else:
 					if newDist < dpTable[(newVisited, newLastPoint)][0]:
 						dpTable[(newVisited, newLastPoint)] = (newDist, prevLastPoint)
-						
+
+		# retracing optimal path also costs O(n^2) time and space
 		optimalPath, optimalCost = self.retracingOptimalPath(dpTable, n)
 		return optimalPath, optimalCost
 
+	# time complexity: O(n^2) because we iterate through the entire table, an nxn matrix
+	# space complexity: O(n^2) because we are storing an nxn table
 	def retracingOptimalPath(self, dpTable, n):
 
+		# for loop below runs in O(n) time
 		citiesToRetrace = tuple(range(n))
 		fullPath = dict((k,v) for k,v in dpTable.items() 
 						if k[0] == citiesToRetrace)
@@ -248,6 +275,9 @@ class TSPSolver:
 		optimalPath = [lastCity]
 		
 		citiesToRetrace = tuple(sorted(set(citiesToRetrace).difference({lastCity})))
+
+		# this while loop is O(n^2) because it goes through every element in our dynamic
+		#programming table
 		while nextToLastCity is not None:
 			
 			lastCity = nextToLastCity
